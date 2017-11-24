@@ -23,18 +23,22 @@ function! GetFindSettingsMessage()
   return "search " . "case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . " " . (g:snugfind_regex ? "regex" : "text")
 endfunction
 
-let g:snugfind_exclude_dir = 'project,target,.git,.idea,.ensime_cache'
-let g:snugfind_exclude = '.tags,.ensime'
+if !exists("g:snugfind_exclude_dir")
+  let g:snugfind_exclude_dir = ''
+endif
+if !exists("g:snugfind_exclude")
+  let g:snugfind_exclude = ''
+endif
 
 function! FindText(interactive, ...)
-  let is_case_sensitive = a:interactive ? g:snugfind_case_sensitive : 0
-  let is_regex = a:interactive ? g:snugfind_regex : 0
-  let token = ""
+  let l:is_case_sensitive = a:interactive ? g:snugfind_case_sensitive : 0
+  let l:is_regex = a:interactive ? g:snugfind_regex : 0
+  let l:token = ""
   if a:interactive == 1
-    let prompt = "search " . (is_case_sensitive ? "s" : ">") . (is_regex ? "r" : ">") . "> "
+    let l:prompt = "search " . (l:is_case_sensitive ? "s" : ">") . (l:is_regex ? "r" : ">") . "> "
     echoh Comment
     call inputsave()
-    let token = input(prompt)
+    let l:token = input(l:prompt)
     call inputrestore()
     echoh None
     if empty(token)
@@ -47,16 +51,19 @@ function! FindText(interactive, ...)
       return FindText(1)
     endif
   else
-    let token = a:1
-    let is_regex = 0
+    if empty(a:1)
+      return
+    endif
+    let l:token = a:1
+    let l:is_regex = 0
   endif
 
-  let grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e '
-  let command = grepCommand . shellescape(token) . " " . (is_regex ? "" : "-F") . " " . (is_case_sensitive ? "" : "-i")
+  let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e '
+  let l:command = l:grepCommand . shellescape(l:token) . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i")
 
-  let @/ = token
-  execute command | copen | normal! "/" . (is_regex ? "" : "\\V") . token . "\<CR>"
-  let @/ = token
+  let @/ = l:token
+  execute l:command | copen | normal! "/" . (l:is_regex ? "" : "\\V") . l:token . "\<CR>"
+  let @/ = l:token
 endfunction
 
 function! FindTextPrompt()
