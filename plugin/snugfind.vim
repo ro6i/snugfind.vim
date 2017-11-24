@@ -58,8 +58,8 @@ function! FindText(interactive, ...)
     let l:is_regex = 0
   endif
 
-  let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e '
-  let l:command = l:grepCommand . shellescape(l:token) . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i")
+  let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e ' . shellescape(l:token)
+  let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i")
 
   let @/ = l:token
   execute l:command | copen | normal! "/" . (l:is_regex ? "" : "\\V") . l:token . "\<CR>"
@@ -73,6 +73,5 @@ endfunction
 function! FindTextFlat(text)
   call FindText(0, a:text)
 endfunction
-
 
 command! -nargs=+ FindTextExact call FindTextFlat(<q-args>)
