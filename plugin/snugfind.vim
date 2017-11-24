@@ -1,5 +1,8 @@
 " a snug wrapper over grep
 
+" 0 - case insensitive
+" 1 - case sensitive
+" TODO: 2 - smart case
 let g:snugfind_case_sensitive = 0
 function! ToggleFindCaseSensitive(verbose)
   let g:snugfind_case_sensitive = g:snugfind_case_sensitive ? 0 : 1
@@ -45,12 +48,14 @@ function! FindText(interactive, ...)
     endif
   else
     let token = a:1
+    let is_regex = 0
   endif
 
   let grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e '
   let command = grepCommand . shellescape(token) . " " . (is_regex ? "" : "-F") . " " . (is_case_sensitive ? "" : "-i")
 
-  execute command | copen | execute "normal! /" . (is_regex ? "" : "\\V") . token . "\<CR>"
+  let @/ = token
+  execute command | copen | normal! "/" . (is_regex ? "" : "\\V") . token . "\<CR>"
   let @/ = token
 endfunction
 
@@ -61,3 +66,6 @@ endfunction
 function! FindTextFlat(text)
   call FindText(0, a:text)
 endfunction
+
+
+command! -nargs=+ FindTextExact call FindTextFlat(<q-args>)
