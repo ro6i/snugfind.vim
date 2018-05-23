@@ -1,5 +1,5 @@
 # snugfind.vim
-A very basic plugin for VIM to make searching in the current directory more convenient.
+A very basic plugin for VIM to make searching in the current directory more convenient.  
 It uses the `grep` command under the hood.
 
 Goals:
