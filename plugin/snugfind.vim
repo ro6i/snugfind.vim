@@ -58,8 +58,15 @@ function! FindText(interactive, ...)
     let l:is_regex = 0
   endif
 
-  let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e ' . shellescape(l:token)
-  let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i")
+  if executable("rg")
+    let l:grepCommand = 'silent grep! ' . shellescape(l:token)
+    let l:command = l:grepCommand . " " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "" : "--case-sensitive")
+    set grepprg=rg\ --vimgrep\ --no-heading
+    set grepformat=%f:%l:%c:%m,%f:%l:%m
+  else
+    let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e ' . shellescape(l:token)
+    let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i")
+  endif
 
   let @/ = l:token
   execute l:command | copen | normal! "/" . (l:is_regex ? "" : "\\V") . l:token . "\<CR>"
