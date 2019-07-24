@@ -19,8 +19,16 @@ function! ToggleFindRegex(verbose)
   endif
 endfunction
 
+let g:snugfind_dir = ""
+function! SetFindDir(verbose, value)
+  let g:snugfind_dir = a:value
+  if a:verbose == 1
+    echom GetFindSettingsMessage()
+  endif
+endfunction
+
 function! GetFindSettingsMessage()
-  return "search " . "case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . " " . (g:snugfind_regex ? "regex" : "text")
+  return "search " . "case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . " " . (g:snugfind_regex ? "regex" : "text") . " " . " in:" . g:snugfind_dir
 endfunction
 
 if !exists("g:snugfind_exclude_dir")
@@ -33,9 +41,10 @@ endif
 function! FindText(interactive, ...)
   let l:is_case_sensitive = a:interactive ? g:snugfind_case_sensitive : 0
   let l:is_regex = a:interactive ? g:snugfind_regex : 0
+  let l:current_dir = a:interactive ? g:snugfind_dir : ""
   let l:token = ""
   if a:interactive == 1
-    let l:prompt = "search " . (l:is_case_sensitive ? "s" : ">") . (l:is_regex ? "r" : ">") . "> "
+    let l:prompt = "search " . (l:is_case_sensitive ? "cs" : "ci") . " " . (l:is_regex ? "r" : "f") . " in:" . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
     echoh Comment
     call inputsave()
     let l:token = input(l:prompt)
@@ -43,11 +52,14 @@ function! FindText(interactive, ...)
     echoh None
     if empty(token)
       return
-    elseif token == 'mode!'
+    elseif token == ':mode'
       execute "normal! \<esc>" | call ToggleFindRegex(0)
       return FindText(1)
-    elseif token == 'case!'
+    elseif token == ':case'
       execute "normal! \<esc>" | call ToggleFindCaseSensitive(0)
+      return FindText(1)
+    elseif token[0:2] == ':in'
+      execute "normal! \<esc>" | call SetFindDir(0, token[4:])
       return FindText(1)
     endif
   else
@@ -60,12 +72,13 @@ function! FindText(interactive, ...)
 
   if executable("rg")
     let l:grepCommand = 'silent grep! ' . shellescape(l:token)
-    let l:command = l:grepCommand . " " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "" : "--case-sensitive")
+    let l:command = l:grepCommand . " --line-buffered " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "--case-sensitive" : "--ignore-case") . " " . l:current_dir
     set grepprg=rg\ --vimgrep\ --no-heading
     set grepformat=%f:%l:%c:%m,%f:%l:%m
   else
-    let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} . -e ' . shellescape(l:token)
-    let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i")
+    let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} -e ' . shellescape(l:token)
+    let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i") . " " . (l:current_dir == '' ? '.' : "'" . l:current_dir . "'")
+    echom l:command
   endif
 
   let @/ = l:token
