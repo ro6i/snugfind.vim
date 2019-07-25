@@ -24,6 +24,13 @@ Goals:
 
 NOTE: These functions and commands respect the global settings.
 
+- Exclude files and directories from search by setting these global variables in your `.vimrc`:
+
+```
+let g:snugfind_exclude_dirs = 'dir/1,dir/2'
+let g:snugfind_exclude_files = 'file1,file_2,file-3'
+```
+
 ### Convenient bindings
 
 Enter `\f` in _normal_ mode to bring up the search prompt:
