@@ -1,10 +1,10 @@
 # snugfind.vim
-A very basic plugin for VIM to make searching in the current directory more convenient.  
-It uses the `grep` command under the hood.
+A very basic plugin for `VIM` to make searching through file contents more convenient.  
+It uses the `ripgrep` (or `grep` in case `rg` is not on your current PATH) command under the hood.
 
 Goals:
 1. Make sure the search works without any escaping issues
-2. Bring it up easily as a prompt (retaining prompt history comes for free)
+2. Bring it up easily as a prompt (retaining prompt history in `VIM` comes for free)
 3. Customize the search to be able to switch case sensitivity and mode (exact or regex)
 
 ## Installation
@@ -18,8 +18,11 @@ Goals:
 
 ## Using
 Start the search prompt by entering a command `:call FindTextPrompt ()` or by using a more convenient binding _(see below)_.
-Switch between case sensitive/insensitive by either entering a command `:call ToggleFindCaseSensitive()` or by entering `case!` when in the prompt.
-Switch between exact/regex by either entering a command `:call ToggleFindRegex()` or by entering `mode!` when in the prompt.
+Switch between case sensitive/insensitive by either entering a command `:call ToggleFindCaseSensitive()` or by entering `:case` when in the prompt.
+Switch between exact/regex by either calling a function `:call ToggleFindRegex()` or by entering `:mode` when in the prompt.
+Set the current search directory by entering `:in your/path/goes/here` in the prompt.
+
+NOTE: These functions and commands respect the global settings.
 
 ### Convenient bindings
 
@@ -33,4 +36,4 @@ Press
 ```
 vnoremap <silent> <Leader><Leader> y:FindTextExact <C-R>"<CR>
 ```
-this will silently copy the text that is currently selected (no line breaks) into the default register and use it as an input.
+this will silently copy the text that is currently selected (no line breaks) into the default register and use it as an input for search.
