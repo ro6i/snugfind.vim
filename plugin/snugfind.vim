@@ -31,11 +31,11 @@ function! GetFindSettingsMessage()
   return "search " . "case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . " " . (g:snugfind_regex ? "regex" : "text") . " " . " in:" . g:snugfind_dir
 endfunction
 
-if !exists("g:snugfind_exclude_dir")
-  let g:snugfind_exclude_dir = ''
+if !exists("g:snugfind_exclude_dirs")
+  let g:snugfind_exclude_dirs = ''
 endif
-if !exists("g:snugfind_exclude")
-  let g:snugfind_exclude = ''
+if !exists("g:snugfind_exclude_files")
+  let g:snugfind_exclude_files = ''
 endif
 
 function! FindText(interactive, ...)
@@ -71,12 +71,29 @@ function! FindText(interactive, ...)
   endif
 
   if executable("rg")
+
+    " function! s:exclusionArgs(csvals)
+    "   if a:csvals == ''
+    "     return ''
+    "   endif
+    "   let stage1 = split(a:csvals, ',')
+    "   let stage2 = copy(stage1)
+    "   let stage3 = map(stage2, {pos, val -> "-g " . "'" . "!" . val . "'"})
+    "   let ignoreList = join(stage3, ' ')
+    "   return ignoreList
+    " endfunction
+
     let l:grepCommand = 'silent grep! ' . shellescape(l:token)
-    let l:command = l:grepCommand . " --line-buffered " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "--case-sensitive" : "--ignore-case") . " " . l:current_dir
+    " let excluded_dirs_args = s:exclusionArgs(g:snugfind_exclude_dirs)
+    " let excluded_files_args = s:exclusionArgs(g:snugfind_exclude_files)
+    let excluded_dirs_args = "-g " . "'" . "!{" . g:snugfind_exclude_dirs . "}" . "'"
+    let excluded_files_args = "-g " . "'" . "!{" . g:snugfind_exclude_files . "}" . "'"
+    let l:command = l:grepCommand . " --line-buffered " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "--case-sensitive" : "--ignore-case") . " " . excluded_dirs_args " " . excluded_files_args . " " . l:current_dir
+    echom l:command
     set grepprg=rg\ --vimgrep\ --no-heading
     set grepformat=%f:%l:%c:%m,%f:%l:%m
   else
-    let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dir . '} --exclude={' . g:snugfind_exclude . '} -e ' . shellescape(l:token)
+    let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dirs . '} --exclude={' . g:snugfind_exclude_files . '} -e ' . shellescape(l:token)
     let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i") . " " . (l:current_dir == '' ? '.' : "'" . l:current_dir . "'")
     echom l:command
   endif
