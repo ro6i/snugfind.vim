@@ -17,10 +17,10 @@ Goals:
 2. Install with `:PlugInstall`.
 
 ## Using
-Start the search prompt by entering a command `:call FindTextPrompt ()` or by using a more convenient binding _(see below)_.
-Switch between case sensitive/insensitive by either entering a command `:call ToggleFindCaseSensitive()` or by entering `:case` when in the prompt.
-Switch between exact/regex by either calling a function `:call ToggleFindRegex()` or by entering `:mode` when in the prompt.
-Set the current search directory by entering `:in your/path/goes/here` in the prompt.
+- Start the search prompt by entering a command `:call FindTextPrompt ()` or by using a more convenient binding _(see below)_.
+- Switch between case sensitive/insensitive by either entering a command `:call ToggleFindCaseSensitive()` or by entering `:case` when in the prompt.
+- Switch between exact/regex by either calling a function `:call ToggleFindRegex()` or by entering `:mode` when in the prompt.
+- Set the current search directory by entering `:in your/path/goes/here` in the prompt.
 
 NOTE: These functions and commands respect the global settings.
 
