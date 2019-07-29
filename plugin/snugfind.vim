@@ -89,13 +89,11 @@ function! FindText(interactive, ...)
     let excluded_dirs_args = "-g " . "'" . "!{" . g:snugfind_exclude_dirs . "}" . "'"
     let excluded_files_args = "-g " . "'" . "!{" . g:snugfind_exclude_files . "}" . "'"
     let l:command = l:grepCommand . " --line-buffered " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "--case-sensitive" : "--ignore-case") . " " . excluded_dirs_args " " . excluded_files_args . " " . l:current_dir
-    echom l:command
     set grepprg=rg\ --vimgrep\ --no-heading
     set grepformat=%f:%l:%c:%m,%f:%l:%m
   else
     let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dirs . '} --exclude={' . g:snugfind_exclude_files . '} -e ' . shellescape(l:token)
     let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i") . " " . (l:current_dir == '' ? '.' : "'" . l:current_dir . "'")
-    echom l:command
   endif
 
   let @/ = l:token
