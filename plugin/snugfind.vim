@@ -63,8 +63,7 @@ function! FindText(interactive, ...)
       execute "normal! \<esc>" | call ToggleFindCaseSensitive(0)
       return FindText(1)
     elseif l:token[0:2] == ':in'
-      execute "normal! \<esc>" | call SetFindDir(1, token[4:])
-      echom "DIR: " . token[4:]
+      execute "normal! \<esc>" | call SetFindDir(0, token[4:])
       return FindText(1)
     endif
   else
