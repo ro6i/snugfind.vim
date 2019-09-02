@@ -45,7 +45,7 @@ endif
 function! FindText(interactive, ...)
   let l:is_case_sensitive = a:interactive ? g:snugfind_case_sensitive : 0
   let l:is_regex = a:interactive ? g:snugfind_regex : 0
-  let l:current_dir = a:interactive ? g:snugfind_dir : ""
+  let l:current_dir = get(a:, 2, g:snugfind_dir)
   let l:token = ""
   if a:interactive == 1
     let l:prompt = "search " . (l:is_case_sensitive ? "cs" : "ci") . " " . (l:is_regex ? "r" : "f") . " in:" . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
@@ -55,6 +55,7 @@ function! FindText(interactive, ...)
     call inputrestore()
     echoh None
     if empty(l:token)
+      redraw
       return
     elseif l:token == ':mode'
       execute "normal! \<esc>" | call ToggleFindRegex(0)
@@ -65,9 +66,17 @@ function! FindText(interactive, ...)
     elseif l:token[0:2] == ':in'
       execute "normal! \<esc>" | call SetFindDir(0, token[4:])
       return FindText(1)
+    elseif l:token[0:2] == 'in:'
+      let l:parsed = matchlist(l:token, '\vin:(".*"|[^ ]*)[ ]+(.+)')[1:2]
+      if len(l:parsed) == 2
+        let l:dir = matchstr(l:parsed[0], '\v("\zs.+\ze"|.+)')
+        let l:str = l:parsed[1]
+        return FindText(0, l:str, l:dir)
+      endif
     endif
   else
     if empty(a:1)
+      redraw
       return
     endif
     let l:token = a:1
@@ -99,6 +108,8 @@ function! FindText(interactive, ...)
     let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dirs . '} --exclude={' . g:snugfind_exclude_files . '} -e ' . shellescape(l:token)
     let l:command = l:grepCommand . " " . (l:is_regex ? "" : "-F") . " " . (l:is_case_sensitive ? "" : "-i") . " " . (l:current_dir == '' ? '.' : "'" . l:current_dir . "'")
   endif
+
+  redraw
 
   if g:snugfind_verbose == 1
     echom "\n"
