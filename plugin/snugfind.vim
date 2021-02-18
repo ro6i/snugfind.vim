@@ -35,6 +35,10 @@ function! GetFindSettingsMessage()
   return "search " . "case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . " " . (g:snugfind_regex ? "regex" : "text") . " " . "in:" . g:snugfind_dir
 endfunction
 
+function! GetFindSettingsSettings()
+  return (g:snugfind_case_sensitive ? "cs" : "ci") . " " . (g:snugfind_regex ? "r" : "f") . " in:" . (g:snugfind_dir == "" ? "." : g:snugfind_dir)
+endfunction
+
 if !exists("g:snugfind_exclude_dirs")
   let g:snugfind_exclude_dirs = ''
 endif
@@ -43,12 +47,14 @@ if !exists("g:snugfind_exclude_files")
 endif
 
 function! FindText(interactive, ...)
-  let l:is_case_sensitive = a:interactive ? g:snugfind_case_sensitive : 0
-  let l:is_regex = a:interactive ? g:snugfind_regex : 0
+  " let l:is_case_sensitive = a:interactive ? g:snugfind_case_sensitive : 0
+  let l:is_case_sensitive = g:snugfind_case_sensitive
+  " let l:is_regex = a:interactive ? g:snugfind_regex : 0
+  let l:is_regex = g:snugfind_regex
   let l:current_dir = get(a:, 2, g:snugfind_dir)
   let l:token = ""
-  if a:interactive == 1
-    let l:prompt = "search " . (l:is_case_sensitive ? "cs" : "ci") . " " . (l:is_regex ? "r" : "f") . " in:" . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
+  if a:interactive >= 1
+    let l:prompt = (a:interactive == 2 ? "settings" : "search") . " " . (l:is_case_sensitive ? "cs" : "ci") . " " . (l:is_regex ? "r" : "f") . " in:" . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
     echoh Comment
     call inputsave()
     let l:token = input(l:prompt)
@@ -59,13 +65,25 @@ function! FindText(interactive, ...)
       return
     elseif l:token == ':mode'
       execute "normal! \<esc>" | call ToggleFindRegex(0)
-      return FindText(1)
+      if a:interactive == 1
+        return FindText(1)
+      else
+        return
+      endif
     elseif l:token == ':case'
       execute "normal! \<esc>" | call ToggleFindCaseSensitive(0)
-      return FindText(1)
+      if a:interactive == 1
+        return FindText(1)
+      else
+        return
+      endif
     elseif l:token[0:2] == ':in'
       execute "normal! \<esc>" | call SetFindDir(0, token[4:])
-      return FindText(1)
+      if a:interactive == 1
+        return FindText(1)
+      else
+        return
+      endif
     elseif l:token[0:2] == 'in:'
       let l:parsed = matchlist(l:token, '\vin:(".*"|[^ ]*)[ ]+(.+)')[1:2]
       if len(l:parsed) == 2
@@ -80,7 +98,7 @@ function! FindText(interactive, ...)
       return
     endif
     let l:token = a:1
-    let l:is_regex = 0
+    " let l:is_regex = 0
   endif
 
   if executable("rg")
@@ -102,7 +120,7 @@ function! FindText(interactive, ...)
     let excluded_dirs_args = "-g " . "'" . "!{" . g:snugfind_exclude_dirs . "}" . "'"
     let excluded_files_args = "-g " . "'" . "!{" . g:snugfind_exclude_files . "}" . "'"
     let l:command = l:grepCommand . " --line-buffered " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "--case-sensitive" : "--ignore-case") . " " . excluded_dirs_args . " " . excluded_files_args . " " . (l:current_dir == '' ? '.' : "'" . l:current_dir . "'")
-    set grepprg=rg\ --vimgrep\ --no-heading
+    set grepprg=rg\ --vimgrep\ --no-heading\ --follow\ --pcre2
     set grepformat=%f:%l:%c:%m,%f:%l:%m
   else
     let l:grepCommand = 'silent grep! -r -n --exclude-dir={' . g:snugfind_exclude_dirs . '} --exclude={' . g:snugfind_exclude_files . '} -e ' . shellescape(l:token)
@@ -123,10 +141,29 @@ endfunction
 
 function! FindTextPrompt()
   call FindText(1)
+  if exists('*lightline#update')
+    call lightline#update()
+  endif
+endfunction
+function! FindTextSettings()
+  call FindText(2)
+  if exists('*lightline#update')
+    call lightline#update()
+  endif
 endfunction
 
 function! FindTextFlat(text)
+  let l:savepoint = g:snugfind_regex
+  let g:snugfind_regex = 0
   call FindText(0, a:text)
+  let g:snugfind_regex = l:savepoint
+endfunction
+
+function! FindTextRegex(text)
+  let l:savepoint = g:snugfind_regex
+  let g:snugfind_regex = 1
+  call FindText(0, a:text)
+  let g:snugfind_regex = l:savepoint
 endfunction
 
 command! -nargs=+ FindTextExact call FindTextFlat(<q-args>)
