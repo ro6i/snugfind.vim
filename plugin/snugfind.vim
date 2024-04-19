@@ -2,7 +2,7 @@
 
 " 0 - non-verbose mode
 " 1 - verbose: will echo the switches and commands to be run
-let g:snugfind_verbose = 0
+" let g:snugfind_verbose = 0
 
 " 0 - case insensitive
 " 1 - case sensitive
@@ -36,7 +36,7 @@ function! GetFindSettingsMessage()
 endfunction
 
 function! GetFindSettingsSettings()
-  return (g:snugfind_case_sensitive ? "cs" : "ci") . " " . (g:snugfind_regex ? "r" : "f") . " in:" . (g:snugfind_dir == "" ? "." : g:snugfind_dir)
+  return (g:snugfind_case_sensitive ? "s" : "i") . " " . (g:snugfind_regex ? "r" : "-") . " : " . (g:snugfind_dir == "" ? "." : g:snugfind_dir)
 endfunction
 
 if !exists("g:snugfind_exclude_dirs")
@@ -47,14 +47,12 @@ if !exists("g:snugfind_exclude_files")
 endif
 
 function! FindText(interactive, ...)
-  " let l:is_case_sensitive = a:interactive ? g:snugfind_case_sensitive : 0
   let l:is_case_sensitive = g:snugfind_case_sensitive
-  " let l:is_regex = a:interactive ? g:snugfind_regex : 0
   let l:is_regex = g:snugfind_regex
-  let l:current_dir = get(a:, 2, g:snugfind_dir)
+  let l:current_dir = (g:snugfind_dir == '' ? get(a:, 2, join(map(copy(g:snugfind_dirs), {key, val -> "'" . val . "'"}), ' ')) : "'" . g:snugfind_dir . "'")
   let l:token = ""
   if a:interactive >= 1
-    let l:prompt = (a:interactive == 2 ? "settings" : "search") . " " . (l:is_case_sensitive ? "cs" : "ci") . " " . (l:is_regex ? "r" : "f") . " in:" . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
+    let l:prompt = (a:interactive == 2 ? "settings" : "search") . " " . (l:is_case_sensitive ? "s" : "i") . " " . (l:is_regex ? "r" : "-") . " : " . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
     echoh Comment
     call inputsave()
     let l:token = input(l:prompt)
@@ -98,28 +96,13 @@ function! FindText(interactive, ...)
       return
     endif
     let l:token = a:1
-    " let l:is_regex = 0
   endif
 
   if executable("rg")
-
-    " function! s:exclusionArgs(csvals)
-    "   if a:csvals == ''
-    "     return ''
-    "   endif
-    "   let stage1 = split(a:csvals, ',')
-    "   let stage2 = copy(stage1)
-    "   let stage3 = map(stage2, {pos, val -> "-g " . "'" . "!" . val . "'"})
-    "   let ignoreList = join(stage3, ' ')
-    "   return ignoreList
-    " endfunction
-
     let l:grepCommand = 'silent grep! ' . shellescape(l:token)
-    " let excluded_dirs_args = s:exclusionArgs(g:snugfind_exclude_dirs)
-    " let excluded_files_args = s:exclusionArgs(g:snugfind_exclude_files)
     let excluded_dirs_args = "-g " . "'" . "!{" . g:snugfind_exclude_dirs . "}" . "'"
     let excluded_files_args = "-g " . "'" . "!{" . g:snugfind_exclude_files . "}" . "'"
-    let l:command = l:grepCommand . " --line-buffered " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "--case-sensitive" : "--ignore-case") . " " . excluded_dirs_args . " " . excluded_files_args . " " . (l:current_dir == '' ? '.' : "'" . l:current_dir . "'")
+    let l:command = l:grepCommand . " --line-buffered " . (l:is_regex ? "" : "--fixed-strings") . " " . (l:is_case_sensitive ? "--case-sensitive" : "--ignore-case") . " " . excluded_dirs_args . " " . excluded_files_args . " " . (l:current_dir == '' ? '.' : l:current_dir)
     set grepprg=rg\ --vimgrep\ --no-heading\ --follow\ --pcre2\ --one-file-system
     set grepformat=%f:%l:%c:%m,%f:%l:%m
   else
@@ -134,9 +117,14 @@ function! FindText(interactive, ...)
     echom l:command
   endif
 
+  let l:cwd_temp = getcwd()
   let @/ = l:token
-  execute l:command | copen | normal! "/" . (l:is_regex ? "" : "\\V") . l:token . "\<CR>"
+  execute l:command
+  execute 'cd' g:quickfix_base_dir
+  copen
+  normal! "/" . (l:is_regex ? "" : "\\V") . l:token . "\<CR>"
   let @/ = l:token
+  execute 'cd' l:cwd_temp
 endfunction
 
 function! FindTextPrompt()
@@ -145,6 +133,7 @@ function! FindTextPrompt()
     call lightline#update()
   endif
 endfunction
+
 function! FindTextSettings()
   call FindText(2)
   if exists('*lightline#update')
