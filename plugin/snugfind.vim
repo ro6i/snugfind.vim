@@ -32,7 +32,7 @@ function! SetFindDir(verbose, value)
 endfunction
 
 function! GetFindSettingsMessage()
-  return "search " . "case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . " " . (g:snugfind_regex ? "regex" : "text") . " " . "in:" . g:snugfind_dir
+  return "search " . " [case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . "] " . " [" . (g:snugfind_regex ? "regex" : "text") . "]  " . "in: " . g:snugfind_dir
 endfunction
 
 function! GetFindSettingsSettings()
