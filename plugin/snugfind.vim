@@ -49,7 +49,7 @@ endif
 function! FindText(interactive, ...)
   let l:is_case_sensitive = g:snugfind_case_sensitive
   let l:is_regex = g:snugfind_regex
-  let l:current_dir = (g:snugfind_dir == '' ? get(a:, 2, join(map(copy(g:snugfind_dirs), {key, val -> "'" . val . "'"}), ' ')) : "'" . g:snugfind_dir . "'")
+  let l:current_dir = (g:snugfind_dir == '' ? get(a:, 2, join(map(copy(g:snugfind_dirs), {key, val -> "[" . val . "]"}), '')) : "[" . g:snugfind_dir . "]")
   let l:token = ""
   if a:interactive >= 1
     let l:prompt = (a:interactive == 2 ? "settings" : "search") . " " . (l:is_case_sensitive ? "s" : "i") . " " . (l:is_regex ? "r" : "-") . " : " . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
