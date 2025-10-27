@@ -7,7 +7,9 @@
 " 0 - case insensitive
 " 1 - case sensitive
 " TODO: 2 - smart case
+
 let g:snugfind_case_sensitive = 0
+
 function! ToggleFindCaseSensitive(verbose)
   let g:snugfind_case_sensitive = g:snugfind_case_sensitive ? 0 : 1
   if a:verbose == 1 || g:snugfind_verbose == 1
@@ -16,6 +18,7 @@ function! ToggleFindCaseSensitive(verbose)
 endfunction
 
 let g:snugfind_regex = 0
+
 function! ToggleFindRegex(verbose)
   let g:snugfind_regex = g:snugfind_regex ? 0 : 1
   if a:verbose == 1 || g:snugfind_verbose == 1
@@ -24,6 +27,7 @@ function! ToggleFindRegex(verbose)
 endfunction
 
 let g:snugfind_dir = ""
+
 function! SetFindDir(verbose, value)
   let g:snugfind_dir = a:value
   if a:verbose == 1 || g:snugfind_verbose == 1
@@ -32,11 +36,16 @@ function! SetFindDir(verbose, value)
 endfunction
 
 function! GetFindSettingsMessage()
-  return "search " . " [case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . "] " . " [" . (g:snugfind_regex ? "regex" : "text") . "]  " . "in: " . g:snugfind_dir
+  return "search setup " . " [case " . (g:snugfind_case_sensitive ? "sensitive" : "insensitive") . "] " . " [" . (g:snugfind_regex ? "regex" : "text") . "]  " . "in: " . g:snugfind_dir
+endfunction
+
+function! GetFindSettingsCurrentDir()
+  let l:current_dir = (g:snugfind_dir == '' ? get(a:, 2, join(map(copy(g:snugfind_dirs), {key, val -> "[" . val . "]"}), ' ')) : "[" . g:snugfind_dir . "]")
+  return (l:current_dir == "" ? "." : l:current_dir)
 endfunction
 
 function! GetFindSettingsSettings()
-  return (g:snugfind_case_sensitive ? "s" : "i") . " " . (g:snugfind_regex ? "r" : "-") . " : " . (g:snugfind_dir == "" ? "." : g:snugfind_dir)
+  return GetFindSettingsCurrentDir()
 endfunction
 
 if !exists("g:snugfind_exclude_dirs")
@@ -49,10 +58,10 @@ endif
 function! FindText(interactive, ...)
   let l:is_case_sensitive = g:snugfind_case_sensitive
   let l:is_regex = g:snugfind_regex
-  let l:current_dir = (g:snugfind_dir == '' ? get(a:, 2, join(map(copy(g:snugfind_dirs), {key, val -> "[" . val . "]"}), '')) : "[" . g:snugfind_dir . "]")
+  let l:current_dir = (g:snugfind_dir == '' ? get(a:, 2, join(map(copy(g:snugfind_dirs), {key, val -> "'" . val . "'"}), ' ')) : "'" . g:snugfind_dir . "'")
   let l:token = ""
   if a:interactive >= 1
-    let l:prompt = (a:interactive == 2 ? "settings" : "search") . " " . (l:is_case_sensitive ? "s" : "i") . " " . (l:is_regex ? "r" : "-") . " : " . (l:current_dir == "" ? "." : l:current_dir) . " " . "> "
+    let l:prompt = (a:interactive == 2 ? "settings" : "search") . " (" . (l:is_case_sensitive ? "c-s" : "c-i") . " " . (l:is_regex ? "regex" : "text") . ") > "
     echoh Comment
     call inputsave()
     let l:token = input(l:prompt)
@@ -78,6 +87,7 @@ function! FindText(interactive, ...)
     elseif l:token[0:2] == ':in'
       execute "normal! \<esc>" | call SetFindDir(0, token[4:])
       if a:interactive == 1
+        call lightline#update()
         return FindText(1)
       else
         return
